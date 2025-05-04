@@ -1,0 +1,4 @@
+CREATE TABLE {prefix}_Data (
+    Id INTEGER PRIMARY KEY,
+    Value TEXT NOT NULL
+);
