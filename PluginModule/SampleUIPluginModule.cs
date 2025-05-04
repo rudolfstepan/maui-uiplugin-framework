@@ -1,7 +1,6 @@
-using ModuleContracts;
+﻿using ModuleContracts;
 using Microsoft.Maui.Controls;
-using System.IO;
-using Microsoft.Maui.Storage;
+using System.Reflection;
 
 namespace PluginModule
 {
@@ -11,9 +10,11 @@ namespace PluginModule
 
         public void Initialize(IModuleHost host)
         {
-            var migrationsPath = Path.Combine(FileSystem.AppDataDirectory, "Modules", Id, "Migrations");
-            var db = host.RegisterDatabase(Id, migrationsPath);
+            // Migrationen direkt aus der Plugin‐Assembly laden
+            var pluginAssembly = typeof(SampleUIPluginModule).Assembly;
+            var db = host.RegisterDatabase(Id, pluginAssembly);
 
+            // Route und Flyout‐Eintrag anlegen
             Routing.RegisterRoute($"plugin/{Id}", typeof(PluginPage));
             Shell.Current.Items.Add(new FlyoutItem
             {

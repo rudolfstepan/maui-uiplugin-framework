@@ -29,11 +29,15 @@ namespace SampleMauiApp.Services
                 using var fs = File.OpenRead(dll);
                 var asm = alc.LoadFromStream(fs);
 
-                var types = asm.GetTypes().Where(t => typeof(IAppModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+                var types = asm.GetTypes()
+                    .Where(t => typeof(IAppModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
                 foreach (var type in types)
                 {
                     var module = ActivatorUtilities.CreateInstance(_provider, type) as IAppModule;
-                    module?.Initialize(_host);
+                    // Registriere DB unter Übergabe der Assembly
+                    _host.RegisterDatabase(module.Id, asm);
+                    module.Initialize(_host);
                 }
             }
         }

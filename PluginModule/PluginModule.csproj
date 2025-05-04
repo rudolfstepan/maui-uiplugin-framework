@@ -8,6 +8,12 @@
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.26100.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Migrations\001_CreateTable.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\001_CreateTable.sql" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\ModuleContracts\ModuleContracts.csproj" />
   </ItemGroup>
 </Project>
