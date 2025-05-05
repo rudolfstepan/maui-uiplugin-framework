@@ -1,9 +1,12 @@
-using Microsoft.Maui.Storage;
-
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
+
+using Microsoft.Maui.Storage;
 
 namespace SampleMauiApp.Services
 {
@@ -11,7 +14,8 @@ namespace SampleMauiApp.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _modulesFolder;
-        private readonly string _remoteUrl = "https://example.com/PluginModule.zip";
+        // URL zum Modul-Manifest (JSON-Array mit Zip-URLs)
+        private readonly string _manifestUrl = "https://www.webstart.at/plugins/modules.json";
 
         public ModuleManager(HttpClient httpClient)
         {
@@ -20,17 +24,39 @@ namespace SampleMauiApp.Services
             Directory.CreateDirectory(_modulesFolder);
         }
 
+        /// <summary>
+        /// Standard-Sync: lädt alle Module vom Manifest-Endpoint.
+        /// </summary>
         public async Task SyncAsync()
+        {
+            await SyncFromEndpointAsync();
+        }
+
+        /// <summary>
+        /// Lädt das Modul-Manifest von der konfigurierten URL
+        /// (Liste von ZIP-URLs), entpackt alle Plugins ins Module-Verzeichnis.
+        /// </summary>
+        public async Task SyncFromEndpointAsync()
         {
             try
             {
-                using var stream = await _httpClient.GetStreamAsync(_remoteUrl);
-                using var archive = new ZipArchive(stream);
-                archive.ExtractToDirectory(_modulesFolder, true);
+                // Manifest als Liste von URLs abrufen
+                var moduleUrls = await _httpClient.GetFromJsonAsync<List<string>>(_manifestUrl);
+                if (moduleUrls == null)
+                    return;
+
+                foreach (var moduleUrl in moduleUrls)
+                {
+                    // ZIP direkt aus dem Stream entpacken
+                    using var stream = await _httpClient.GetStreamAsync(moduleUrl);
+                    using var archive = new ZipArchive(stream);
+                    archive.ExtractToDirectory(_modulesFolder, overwriteFiles: true);
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore errors
+                // TODO: Hier ggf. Logging hinzufügen
+                System.Diagnostics.Debug.WriteLine($"ModuleSync-Fehler: {ex}");
             }
         }
     }
